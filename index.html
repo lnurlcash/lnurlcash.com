@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LNURLcash — LUD-25, bearer notes for the Lightning Network</title>
+<meta name="description" content="LUD-25 turns an ordinary LNURL-withdraw k1 into a bearer note. Mint issues them, Wallet carries them, Vault secures them offline.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340;9..144,440;9..144,560;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="nav__mark" href="#main">
+      <span class="nav__mark-lnurl">LNURL</span><span class="nav__mark-cash">CASH</span>
+    </a>
+    <nav class="nav__links" aria-label="Instruments">
+      <a class="nav__link" href="#mint" aria-label="Mint"><i class="dot dot--mint" aria-hidden="true"></i><span class="nav__link-text">Mint</span></a>
+      <a class="nav__link" href="#wallet" aria-label="Wallet"><i class="dot dot--amber" aria-hidden="true"></i><span class="nav__link-text">Wallet</span></a>
+      <a class="nav__link" href="#vault" aria-label="Vault"><i class="dot dot--navy" aria-hidden="true"></i><span class="nav__link-text">Vault</span></a>
+      <a class="nav__link nav__link--spec" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">Spec ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="hero__copy">
+      <a class="eyebrow" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">
+        LUD·25 — DRAFT LNURL SPECIFICATION
+      </a>
+      <h1 class="hero__title">A withdraw link<br>that spends like cash.</h1>
+      <p class="hero__sub">
+        LUD-25 turns an ordinary LNURL-withdraw <code>k1</code> into a bearer note.
+        Copy it, print it, tap it over NFC, hand it to whoever's next to you —
+        whoever holds the secret can redeem it. No new endpoint. No new encoding.
+        Just <a href="https://github.com/lnurl/luds/blob/luds/03.md" target="_blank" rel="noopener">LUD-03</a>
+        and <a href="https://github.com/lnurl/luds/blob/luds/06.md" target="_blank" rel="noopener">LUD-06</a>,
+        used as money.
+      </p>
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">
+          Read LUD-25 on GitHub <span aria-hidden="true">↗</span>
+        </a>
+        <p class="hero__actions-note">
+          implemented below by
+          <a href="#mint"><i class="dot dot--mint" aria-hidden="true"></i>Mint</a>,
+          <a href="#wallet"><i class="dot dot--amber" aria-hidden="true"></i>Wallet</a> &amp;
+          <a href="#vault"><i class="dot dot--navy" aria-hidden="true"></i>Vault</a>
+        </p>
+      </div>
+    </div>
+
+    <figure class="note" id="note" tabindex="0" aria-label="Illustration of an LNURLcash bearer note">
+      <div class="note__sheen" aria-hidden="true"></div>
+      <div class="note__corner note__corner--tl" aria-hidden="true"></div>
+      <div class="note__corner note__corner--tr" aria-hidden="true"></div>
+      <div class="note__corner note__corner--bl" aria-hidden="true"></div>
+      <div class="note__corner note__corner--br" aria-hidden="true"></div>
+
+      <div class="note__header">
+        <span class="note__wordmark">LNURLcash</span>
+        <span class="note__series">SERIES LUD·25</span>
+      </div>
+
+      <div class="note__body">
+        <div class="note__amount"><span class="note__approx">≈</span>21,000<span class="note__unit">msat</span></div>
+        <button class="note__serial" id="noteSerial" type="button" aria-label="Copy example k1 secret">
+          <span class="note__serial-label">k1</span>
+          <span class="note__serial-value">c04a601c24b7…126a3ae52</span>
+          <span class="note__serial-copied" aria-hidden="true">copied</span>
+        </button>
+      </div>
+
+      <div class="note__footer">
+        <span>PRINTED AMOUNT UNVERIFIED — SEE <em>maxWithdrawable</em></span>
+        <span>REDEEMABLE VIA LNURL-WITHDRAW · LUD-03</span>
+      </div>
+    </figure>
+  </section>
+
+  <section class="stack" aria-labelledby="stack-heading">
+    <div class="stack__intro">
+      <p class="eyebrow eyebrow--static">THE LNURLCASH STACK</p>
+      <h2 class="stack__heading" id="stack-heading">Issued. Carried. Secured.</h2>
+      <p class="stack__sub">
+        Three independent, spec-compliant implementations of LUD-25.
+        Run one, or all three — every note is redeemable across all of them,
+        and by any LNURL-withdraw wallet that has never heard of LNURLcash.
+      </p>
+    </div>
+
+    <div class="cards">
+
+      <article class="card card--mint" id="mint">
+        <div class="card__top">
+          <span class="card__tag">01 · ISSUED</span>
+          <h3 class="card__name">Mint</h3>
+          <p class="card__tagline">Pay a Lightning address. Get a banknote.</p>
+        </div>
+        <p class="card__desc">
+          A minimal backend implementing LUD-25 on plain LUD-03 <code>withdrawRequest</code>
+          and LUD-06 <code>payRequest</code>. Paying its Lightning address mints a note —
+          the payment preimage becomes the <code>k1</code> that holds its value.
+        </p>
+        <ul class="card__list">
+          <li>One-pager frontend: QR code, node info, mint limits</li>
+          <li>Rotate, split, merge, or melt any note back to sats</li>
+          <li>Never sees a wallet-generated secret — only its hash</li>
+        </ul>
+        <div class="card__actions">
+          <a class="card__cta" href="https://github.com/dni/lnurl-mint" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+
+      <article class="card card--amber" id="wallet">
+        <div class="card__top">
+          <span class="card__tag">02 · CARRIED</span>
+          <h3 class="card__name">Wallet</h3>
+          <p class="card__tagline">No backend. No accounts. Just your browser.</p>
+        </div>
+        <p class="card__desc">
+          A single static page that holds notes encrypted in local storage and
+          talks straight to whichever mint issued them. Works against any
+          LUD-25-compliant service, not only Mint.
+        </p>
+        <ul class="card__list">
+          <li>Scan, paste, or NFC-tap a note to redeem it</li>
+          <li>Generates its own secrets on rotate, split and merge</li>
+          <li>Pairs with Vault over WebSerial or Bluetooth</li>
+        </ul>
+        <div class="card__actions">
+          <a class="card__cta card__cta--primary" href="https://wallet.lnurlcash.com" target="_blank" rel="noopener">Open wallet <span aria-hidden="true">↗</span></a>
+          <a class="card__cta" href="https://github.com/dni/lnurl-wallet" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+
+      <article class="card card--navy" id="vault">
+        <div class="card__top">
+          <span class="card__tag">03 · SECURED</span>
+          <h3 class="card__name">Vault</h3>
+          <p class="card__tagline">Cold storage for a bearer note.</p>
+        </div>
+        <p class="card__desc">
+          An ESP32-S3 hardware wallet built for LNURLcash. Note secrets come
+          from a hardware RNG and never leave the device until a physical
+          button says so.
+        </p>
+        <ul class="card__list">
+          <li>Hold both buttons to unveil a note as an on-screen QR</li>
+          <li>Works fully offline — no pairing required to browse notes</li>
+          <li>Every plaintext export gated behind a button press</li>
+        </ul>
+        <div class="card__actions">
+          <a class="card__cta" href="https://github.com/dni/lnurl-vault" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer__top">
+    <div class="footer__brand">
+      <span class="footer__mark"><span class="nav__mark-lnurl">LNURL</span><span class="nav__mark-cash">CASH</span></span>
+      <p class="footer__tagline">Bearer notes for the Lightning Network, defined once in LUD-25.</p>
+    </div>
+    <div class="footer__col">
+      <h4>Specification</h4>
+      <a href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">LUD-25 — LNURLcash (PR #301)</a>
+      <a href="https://github.com/lnurl/luds/blob/luds/03.md" target="_blank" rel="noopener">LUD-03 — withdrawRequest</a>
+      <a href="https://github.com/lnurl/luds/blob/luds/06.md" target="_blank" rel="noopener">LUD-06 — payRequest</a>
+    </div>
+    <div class="footer__col">
+      <h4>Instruments</h4>
+      <a href="https://github.com/dni/lnurl-mint" target="_blank" rel="noopener"><i class="dot dot--mint" aria-hidden="true"></i>Mint</a>
+      <a href="https://github.com/dni/lnurl-wallet" target="_blank" rel="noopener"><i class="dot dot--amber" aria-hidden="true"></i>Wallet</a>
+      <a href="https://github.com/dni/lnurl-vault" target="_blank" rel="noopener"><i class="dot dot--navy" aria-hidden="true"></i>Vault</a>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>SERIES LUD·25 — STATUS: DRAFT — NOT LEGAL TENDER</span>
+    <span>lnurlcash.com</span>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
