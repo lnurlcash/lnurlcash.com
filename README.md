@@ -13,7 +13,7 @@ implementations:
 - **Vault** — ESP32-S3 hardware device that secures them offline ([lnurl-vault](https://github.com/dni/lnurl-vault))
 
 Broader language libraries are tracked on
-[awesome-lnurlcash](https://github.com/TheCryptoDonkey/awesome-lnurlcash).
+[awesome-lnurlcash](https://github.com/lnurlcash/awesome-lnurlcash).
 
 ## Stack
 
