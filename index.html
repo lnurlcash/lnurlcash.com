@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LNURLcash — LUD-25, bearer notes for the Lightning Network</title>
-<meta name="description" content="LUD-25 turns an ordinary LNURL-withdraw k1 into a bearer note. Mint issues them, Wallet carries them, Vault secures them offline.">
+<title>LNURLcash — LUD-25, programmable bearer notes for the Lightning Network</title>
+<meta name="description" content="LUD-25 turns an ordinary LNURL-withdraw k1 into a programmable bearer note, secured by any Bitcoin script condition. Mint issues them, Wallet carries them, Vault secures them offline.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,14 +36,15 @@
       <a class="eyebrow" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">
         LUD·25 — DRAFT LNURL SPECIFICATION
       </a>
-      <h1 class="hero__title">A withdraw link<br>that spends like cash.</h1>
+      <h1 class="hero__title">A withdraw link<br>that's programmable money.</h1>
       <p class="hero__sub">
-        LUD-25 turns an ordinary LNURL-withdraw <code>k1</code> into a bearer note.
-        Copy it, print it, tap it over NFC, hand it to whoever's next to you —
-        whoever holds the secret can redeem it. No new endpoint. No new encoding.
-        Just <a href="https://github.com/lnurl/luds/blob/luds/03.md" target="_blank" rel="noopener">LUD-03</a>
+        LUD-25 turns an ordinary LNURL-withdraw <code>k1</code> into a bearer note secured
+        by real Bitcoin script — a hashlock, a signature, a timelock, or any spending
+        condition you can write. Copy it, print it, tap it over NFC, hand it to whoever's
+        next to you. No new endpoint. No new encoding. Just
+        <a href="https://github.com/lnurl/luds/blob/luds/03.md" target="_blank" rel="noopener">LUD-03</a>
         and <a href="https://github.com/lnurl/luds/blob/luds/06.md" target="_blank" rel="noopener">LUD-06</a>,
-        used as money.
+        made programmable.
       </p>
       <div class="hero__actions">
         <a class="btn btn--primary" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">
@@ -84,6 +85,32 @@
         <span>REDEEMABLE VIA LNURL-WITHDRAW · LUD-03</span>
       </div>
     </figure>
+  </section>
+
+  <section class="conditions" aria-labelledby="conditions-heading">
+    <p class="eyebrow eyebrow--static">SPENDING CONDITIONS</p>
+    <h2 class="conditions__heading" id="conditions-heading">Same link, new rules for who can spend it.</h2>
+    <p class="conditions__sub">
+      A plain withdraw link pays whoever holds the string. LUD-25 keeps that link exactly
+      as it is — but lets the issuer decide, in Bitcoin script, what "holding" has to mean.
+    </p>
+    <div class="conditions__grid">
+      <div class="conditions__item">
+        <span class="conditions__num">01</span>
+        <h3 class="conditions__title">Zero new endpoints</h3>
+        <p class="conditions__body">A note is still a plain <code>withdrawRequest</code> <code>k1</code>. A wallet that's never heard of LNURLcash redeems it exactly like any LUD-03 link.</p>
+      </div>
+      <div class="conditions__item">
+        <span class="conditions__num">02</span>
+        <h3 class="conditions__title">Any script condition</h3>
+        <p class="conditions__body">Hashlock, signature, timelock, or a multi-party leaf — one verification rule covers them all, delegated straight to Bitcoin's own script interpreter.</p>
+      </div>
+      <div class="conditions__item">
+        <span class="conditions__num">03</span>
+        <h3 class="conditions__title">Offline circulation</h3>
+        <p class="conditions__body">Notes carry their own certificate. Two wallets can trade one hand-to-hand with no signal, and settle with the mint whenever they're back online.</p>
+      </div>
+    </div>
   </section>
 
   <section class="stack" aria-labelledby="stack-heading">
