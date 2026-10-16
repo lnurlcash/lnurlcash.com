@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LNURLcash — LUD-25, programmable bearer notes for the Lightning Network</title>
-<meta name="description" content="LUD-25 turns an ordinary LNURL-withdraw k1 into a programmable bearer note, secured by any Bitcoin script condition. Mint issues them, Wallet carries them, Vault secures them offline.">
+<title>LNURLcash — LUD-25/26, programmable bearer notes for the Lightning Network</title>
+<meta name="description" content="LUD-25 turns an ordinary LNURL-withdraw k1 into a programmable bearer note: a taproot output key, opened by any spend Bitcoin's own script rules accept. LUD-26 derives notes from a seed and receives them at a Lightning Address.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +24,7 @@
       <a class="nav__link" href="#mint" aria-label="Mint"><i class="dot dot--mint" aria-hidden="true"></i><span class="nav__link-text">Mint</span></a>
       <a class="nav__link" href="#wallet" aria-label="Wallet"><i class="dot dot--amber" aria-hidden="true"></i><span class="nav__link-text">Wallet</span></a>
       <a class="nav__link" href="#vault" aria-label="Vault"><i class="dot dot--navy" aria-hidden="true"></i><span class="nav__link-text">Vault</span></a>
+      <a class="nav__link" href="#run" aria-label="Run"><i class="dot dot--gold" aria-hidden="true"></i><span class="nav__link-text">Run</span></a>
       <a class="nav__link nav__link--spec" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">Spec ↗</a>
     </nav>
   </div>
@@ -34,27 +35,28 @@
   <section class="hero">
     <div class="hero__copy">
       <a class="eyebrow" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">
-        LUD·25 — DRAFT LNURL SPECIFICATION
+        LUD·25 / LUD·26 — DRAFT LNURL SPECIFICATION
       </a>
       <h1 class="hero__title">A withdraw link<br>that's programmable money.</h1>
       <p class="hero__sub">
-        LUD-25 turns an ordinary LNURL-withdraw <code>k1</code> into a bearer note secured
-        by real Bitcoin script — a hashlock, a signature, a timelock, or any spending
-        condition you can write. Copy it, print it, tap it over NFC, hand it to whoever's
-        next to you. No new endpoint. No new encoding. Just
+        LUD-25 turns an ordinary LNURL-withdraw <code>k1</code> into a bearer note. Each note
+        is a taproot output key, opened by any spend Bitcoin's own script rules accept: a
+        hashlock, a signature, a timelock or a multi-party leaf. Copy it, print it, tap it
+        over NFC, hand it to whoever's next to you. There's no new endpoint. A wallet that
+        has never heard of LNURLcash sees a plain
         <a href="https://github.com/lnurl/luds/blob/luds/03.md" target="_blank" rel="noopener">LUD-03</a>
-        and <a href="https://github.com/lnurl/luds/blob/luds/06.md" target="_blank" rel="noopener">LUD-06</a>,
-        made programmable.
+        withdraw link and cashes it out.
       </p>
       <div class="hero__actions">
         <a class="btn btn--primary" href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">
-          Read LUD-25 on GitHub <span aria-hidden="true">↗</span>
+          Read LUD-25 &amp; LUD-26 <span aria-hidden="true">↗</span>
         </a>
         <p class="hero__actions-note">
           implemented below by
           <a href="#mint"><i class="dot dot--mint" aria-hidden="true"></i>Mint</a>,
-          <a href="#wallet"><i class="dot dot--amber" aria-hidden="true"></i>Wallet</a> &amp;
-          <a href="#vault"><i class="dot dot--navy" aria-hidden="true"></i>Vault</a>
+          <a href="#wallet"><i class="dot dot--amber" aria-hidden="true"></i>Wallet</a>,
+          <a href="#vault"><i class="dot dot--navy" aria-hidden="true"></i>Vault</a> &amp;
+          <a href="#run"><i class="dot dot--gold" aria-hidden="true"></i>Run</a>
         </p>
       </div>
     </div>
@@ -73,15 +75,16 @@
 
       <div class="note__body">
         <div class="note__amount"><span class="note__approx">≈</span>21,000<span class="note__unit">msat</span></div>
-        <button class="note__serial" id="noteSerial" type="button" aria-label="Copy example k1 secret">
+        <button class="note__serial" id="noteSerial" type="button" aria-label="Copy example k1 spend">
           <span class="note__serial-label">k1</span>
           <span class="note__serial-value">c04a601c24b7…126a3ae52</span>
           <span class="note__serial-copied" aria-hidden="true">copied</span>
         </button>
+        <p class="note__cert"><span>c</span> cs1… · certified by <em>mintPubkey</em></p>
       </div>
 
       <div class="note__footer">
-        <span>PRINTED AMOUNT UNVERIFIED — SEE <em>maxWithdrawable</em></span>
+        <span>PRINTED AMOUNT UNVERIFIED — SEE <em>cs1</em> OR <em>maxWithdrawable</em></span>
         <span>REDEEMABLE VIA LNURL-WITHDRAW · LUD-03</span>
       </div>
     </figure>
@@ -91,24 +94,111 @@
     <p class="eyebrow eyebrow--static">SPENDING CONDITIONS</p>
     <h2 class="conditions__heading" id="conditions-heading">Same link, new rules for who can spend it.</h2>
     <p class="conditions__sub">
-      A plain withdraw link pays whoever holds the string. LUD-25 keeps that link exactly
-      as it is — but lets the issuer decide, in Bitcoin script, what "holding" has to mean.
+      A plain withdraw link pays whoever holds the string. LUD-25 keeps the link as it is, but
+      the <code>k1</code> becomes a spend of a taproot output key <code>Q</code>. The mint only
+      tracks <code>Q</code> → value, and Bitcoin script decides what holding the note means.
     </p>
-    <div class="conditions__grid">
+    <div class="conditions__grid conditions__grid--4">
       <div class="conditions__item">
         <span class="conditions__num">01</span>
         <h3 class="conditions__title">Zero new endpoints</h3>
-        <p class="conditions__body">A note is still a plain <code>withdrawRequest</code> <code>k1</code>. A wallet that's never heard of LNURLcash redeems it exactly like any LUD-03 link.</p>
+        <p class="conditions__body">A note is still a <code>withdrawRequest</code> <code>k1</code>, and any LUD-03 wallet can melt it to a BOLT-11 invoice. Minting only needs a wallet that can attach a LUD-12 comment.</p>
       </div>
       <div class="conditions__item">
         <span class="conditions__num">02</span>
         <h3 class="conditions__title">Any script condition</h3>
-        <p class="conditions__body">Hashlock, signature, timelock, or a multi-party leaf — one verification rule covers them all, delegated straight to Bitcoin's own script interpreter.</p>
+        <p class="conditions__body">A key-path signature (<code>ck1</code>), a script-path spend (<code>cw1</code>), or a plain bearer preimage as 64 hex characters. One rule covers all of them, checked by Bitcoin Core's own interpreter, <code>libbitcoinkernel</code>.</p>
       </div>
       <div class="conditions__item">
         <span class="conditions__num">03</span>
+        <h3 class="conditions__title">Bound to one mint</h3>
+        <p class="conditions__body">Signatures are made over a fixed, never-broadcast spend transaction tied to the mint's domain, so a signature made for one mint can't be replayed at another.</p>
+      </div>
+      <div class="conditions__item">
+        <span class="conditions__num">04</span>
         <h3 class="conditions__title">Offline circulation</h3>
-        <p class="conditions__body">Notes carry their own certificate. Two wallets can trade one hand-to-hand with no signal, and settle with the mint whenever they're back online.</p>
+        <p class="conditions__body">A <code>cs1</code> certificate, signed by the mint's node key, travels with the note. A recipient can check it with no signal, then rotate the note once they're back online.</p>
+      </div>
+    </div>
+    <p class="conditions__fine">
+      Timelocks are checked against the mint's clock. That makes them a custodial policy, not a consensus guarantee.
+    </p>
+  </section>
+
+  <section class="ops" aria-labelledby="ops-heading">
+    <div class="ops__intro">
+      <p class="eyebrow eyebrow--static">ONE CALLBACK, FIVE OPERATIONS</p>
+      <h2 class="ops__heading" id="ops-heading">Mint it, move it, melt it.</h2>
+      <p class="ops__sub">
+        Your wallet generates every new note itself and shows the mint only its public
+        <code>cp1</code>. The mint never sees a secret it could spend. If any spend in a request
+        fails, nothing is burned or minted.
+      </p>
+    </div>
+    <div class="ops__table" role="table" aria-label="LNURLcash operations">
+      <div class="ops__row ops__row--head" role="row">
+        <span role="columnheader">Operation</span>
+        <span role="columnheader">Request</span>
+        <span role="columnheader">Result</span>
+      </div>
+      <div class="ops__row" role="row">
+        <span class="ops__op" role="cell">Mint</span>
+        <code class="ops__req" role="cell">payRequest · comment=cp1&lt;Q&gt;</code>
+        <span class="ops__res" role="cell">Pay the invoice and <code>Q</code> is credited with the amount, less any advertised mint fee.</span>
+      </div>
+      <div class="ops__row" role="row">
+        <span class="ops__op" role="cell">Melt</span>
+        <code class="ops__req" role="cell">callback?k1=…&amp;pr=lnbc…</code>
+        <span class="ops__res" role="cell">The invoice is paid, and the note burns once the payment settles. This is plain LUD-03.</span>
+      </div>
+      <div class="ops__row" role="row">
+        <span class="ops__op" role="cell">Rotate</span>
+        <code class="ops__req" role="cell">callback?k1=…&amp;p1=cp1…</code>
+        <span class="ops__res" role="cell">The note is burned and the same value is minted at <code>p1</code>. Do this as soon as you receive a note.</span>
+      </div>
+      <div class="ops__row" role="row">
+        <span class="ops__op" role="cell">Split</span>
+        <code class="ops__req" role="cell">callback?k1=…&amp;amount=…&amp;p1=…&amp;p2=…</code>
+        <span class="ops__res" role="cell"><code>p1</code> gets <code>amount</code> and <code>p2</code> gets the change.</span>
+      </div>
+      <div class="ops__row" role="row">
+        <span class="ops__op" role="cell">Merge</span>
+        <code class="ops__req" role="cell">callback?k1=…&amp;k1=…&amp;p1=…</code>
+        <span class="ops__res" role="cell">All the notes are burned, and one note worth their sum is minted at <code>p1</code>.</span>
+      </div>
+    </div>
+    <p class="ops__fine">
+      To check a note without revealing its spend, send <code>?p=cp1…</code> to the informational GET.
+    </p>
+  </section>
+
+  <section class="conditions seed" aria-labelledby="seed-heading">
+    <p class="eyebrow eyebrow--static">LUD·26 — DETERMINISTIC NOTES</p>
+    <h2 class="conditions__heading" id="seed-heading">Twelve words bring every note back.</h2>
+    <p class="conditions__sub">
+      LUD-26 derives key-path notes from a seed, with one hardened branch per mint, so a wallet
+      can lose its storage and still recover its notes.
+    </p>
+    <div class="conditions__grid conditions__grid--4">
+      <div class="conditions__item">
+        <span class="conditions__num">01</span>
+        <h3 class="conditions__title">One branch per mint</h3>
+        <p class="conditions__body">Derived under <code>m/139'</code> with LUD-05's domain hashing, and split into wallet, change and Lightning Address counters, the way an HD wallet keeps receive and change apart.</p>
+      </div>
+      <div class="conditions__item">
+        <span class="conditions__num">02</span>
+        <h3 class="conditions__title">Recovery by scan</h3>
+        <p class="conditions__body">Re-derive each key and ask the mint with <code>?p=</code> until you reach a gap limit. Each signature is deterministic, so recovered notes can be spent right away.</p>
+      </div>
+      <div class="conditions__item">
+        <span class="conditions__num">03</span>
+        <h3 class="conditions__title">Watch-only <code>cx1</code></h3>
+        <p class="conditions__body">An xpub for notes. A bookkeeping tool or a point-of-sale terminal can list every note on a branch without being able to spend any of them.</p>
+      </div>
+      <div class="conditions__item">
+        <span class="conditions__num">04</span>
+        <h3 class="conditions__title">A Lightning Address that mints</h3>
+        <p class="conditions__body">Register a <code>cx1</code> at a mint, and each payment to <code>you@mint</code> lands as a note on your seed. Payers at the same mint can send by internal transfer, with no Lightning payment.</p>
       </div>
     </div>
   </section>
@@ -118,9 +208,8 @@
       <p class="eyebrow eyebrow--static">THE LNURLCASH STACK</p>
       <h2 class="stack__heading" id="stack-heading">Issued. Carried. Secured.</h2>
       <p class="stack__sub">
-        Three independent, spec-compliant implementations of LUD-25.
-        Run one, or all three — every note is redeemable across all of them,
-        and by any LNURL-withdraw wallet that has never heard of LNURLcash.
+        Open-source implementations of LUD-25 and LUD-26. You can run any of them, and every
+        note also works in any LNURL-withdraw wallet that has never heard of LNURLcash.
       </p>
     </div>
 
@@ -130,21 +219,25 @@
         <div class="card__top">
           <span class="card__tag">01 · ISSUED</span>
           <h3 class="card__name">Mint</h3>
-          <p class="card__tagline">Pay a Lightning address. Get a banknote.</p>
+          <p class="card__tagline">Pay a Lightning Address. Get a banknote.</p>
         </div>
         <p class="card__desc">
-          A minimal backend implementing LUD-25 on plain LUD-03 <code>withdrawRequest</code>
-          and LUD-06 <code>payRequest</code>. Paying its Lightning address mints a note —
-          the payment preimage becomes the <code>k1</code> that holds its value.
+          A backend that issues notes on plain LUD-03 <code>withdrawRequest</code> and LUD-06
+          <code>payRequest</code>. Your wallet pays the mint's Lightning Address with the note's
+          <code>cp1</code> as comment, and the mint credits it. Every spend is checked by
+          Bitcoin Core's interpreter.
         </p>
         <ul class="card__list">
-          <li>One-pager frontend: QR code, node info, mint limits</li>
           <li>Rotate, split, merge, or melt any note back to sats</li>
-          <li>Never sees a wallet-generated secret — only its hash</li>
+          <li><code>cs1</code> certificates, LUD-21 verify, mint fees</li>
+          <li>Lightning Address auto-mint for registered <code>cx1</code>s</li>
+          <li>Python (lnd, cln, spark), Rust with its own ldk-node, or a CLN plugin</li>
         </ul>
         <div class="card__actions">
           <a class="card__cta card__cta--primary" href="https://mint.lnurlcash.com" target="_blank" rel="noopener">Open mint <span aria-hidden="true">↗</span></a>
-          <a class="card__cta" href="https://github.com/dni/lnurl-mint" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
+          <a class="card__cta" href="https://github.com/lnurlcash/lnurl-mint" target="_blank" rel="noopener">Python ↗</a>
+          <a class="card__cta" href="https://github.com/lnurlcash/lnurl-mint-rust" target="_blank" rel="noopener">Rust ↗</a>
+          <a class="card__cta" href="https://github.com/lnurlcash/cln-mint" target="_blank" rel="noopener">CLN ↗</a>
         </div>
       </article>
 
@@ -152,21 +245,22 @@
         <div class="card__top">
           <span class="card__tag">02 · CARRIED</span>
           <h3 class="card__name">Wallet</h3>
-          <p class="card__tagline">No backend. No accounts. Just your browser.</p>
+          <p class="card__tagline">No backend. No accounts. Just your seed.</p>
         </div>
         <p class="card__desc">
-          A single static page that holds notes encrypted in local storage and
-          talks straight to whichever mint issued them. Works against any
-          LUD-25-compliant service, not only Mint.
+          A single static page that keeps notes encrypted under your seed phrase in local
+          storage, and talks directly to the mint that issued each note. It works with any
+          mint that follows the spec. There is also a native desktop wallet.
         </p>
         <ul class="card__list">
-          <li>Scan, paste, or NFC-tap a note to redeem it</li>
-          <li>Generates its own secrets on rotate, split and merge</li>
+          <li>Scan, paste, or NFC-tap a note, then verify it and rotate it at once</li>
+          <li>Generates every new secret itself and pins each mint's key</li>
           <li>Pairs with Vault over WebSerial or Bluetooth</li>
         </ul>
         <div class="card__actions">
           <a class="card__cta card__cta--primary" href="https://wallet.lnurlcash.com" target="_blank" rel="noopener">Open wallet <span aria-hidden="true">↗</span></a>
-          <a class="card__cta" href="https://github.com/dni/lnurl-wallet" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
+          <a class="card__cta" href="https://github.com/lnurlcash/lnurl-wallet" target="_blank" rel="noopener">Web ↗</a>
+          <a class="card__cta" href="https://github.com/lnurlcash/lnurl-wallet-native" target="_blank" rel="noopener">Desktop ↗</a>
         </div>
       </article>
 
@@ -177,27 +271,54 @@
           <p class="card__tagline">Cold storage for a bearer note.</p>
         </div>
         <p class="card__desc">
-          An ESP32-S3 hardware wallet built for LNURLcash. Note secrets come
-          from a hardware RNG and never leave the device until a physical
-          button says so.
+          An ESP32-S3 hardware wallet built for LNURLcash. Note secrets come from a hardware
+          RNG, and the device reveals only their hash until the mint confirms. A secret leaves
+          the device only when you press a button.
         </p>
         <ul class="card__list">
-          <li>Hold both buttons to unveil a note as an on-screen QR</li>
-          <li>Works fully offline — no pairing required to browse notes</li>
-          <li>Every plaintext export gated behind a button press</li>
+          <li>Hold both buttons to show a note as an on-screen QR code</li>
+          <li>Works fully offline. No pairing is needed to browse notes</li>
+          <li>Every plaintext export needs a button press</li>
         </ul>
         <div class="card__actions">
           <a class="card__cta card__cta--primary" href="https://vault.lnurlcash.com" target="_blank" rel="noopener">Open vault <span aria-hidden="true">↗</span></a>
-          <a class="card__cta" href="https://github.com/dni/lnurl-vault" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
+          <a class="card__cta" href="https://github.com/lnurlcash/lnurl-vault" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
         </div>
       </article>
 
     </div>
 
-    <p class="stack__more">
-      Plus libraries in TypeScript, Python, Rust, Kotlin &amp; Go, tracked on
-      <a href="https://github.com/lnurlcash/awesome-lnurlcash" target="_blank" rel="noopener">awesome-lnurlcash ↗</a>
-    </p>
+    <article class="run" id="run">
+      <div class="run__copy">
+        <span class="card__tag">04 · RUN · PRIVATE BETA</span>
+        <h3 class="run__name">Your own mint, running itself.</h3>
+        <p class="run__desc">
+          A hosted <a href="https://github.com/lnurlcash/lnurl-mint-rust" target="_blank" rel="noopener">lnurl-mint-rust</a>,
+          unmodified, with its own Lightning node. LSPS2 opens inbound channels just in time,
+          and a shared full node keeps it synced. Sign in with nostr, name your mint, and it goes
+          live at <code>you.run.lnurlcash.com</code>. It's the same open-source mint, so you
+          can take its data directory and run it yourself.
+        </p>
+      </div>
+      <div class="run__actions">
+        <a class="btn btn--primary" href="https://run.lnurlcash.com" target="_blank" rel="noopener">Join the beta with Nostr <span aria-hidden="true">↗</span></a>
+        <a class="card__cta" href="https://github.com/lnurlcash/run" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a>
+      </div>
+    </article>
+
+    <div class="libs" aria-labelledby="libs-heading">
+      <h3 class="libs__heading" id="libs-heading">Build on it</h3>
+      <ul class="libs__list">
+        <li><a href="https://github.com/lnurlcash/lnurlcash-core" target="_blank" rel="noopener"><b>lnurlcash-core</b><span>Rust, with Kotlin &amp; Swift bindings</span></a></li>
+        <li><a href="https://github.com/lnurlcash/lnurlcash-kit" target="_blank" rel="noopener"><b>lnurlcash-kit</b><span>TypeScript</span></a></li>
+        <li><a href="https://github.com/lnurlcash/kernel" target="_blank" rel="noopener"><b>lnurlcash-kernel</b><span>libbitcoinkernel verifier for Python &amp; Rust</span></a></li>
+        <li><a href="https://github.com/TheCryptoDonkey/lnurlcash-conformance" target="_blank" rel="noopener"><b>lnurlcash-conformance</b><span>Grade a live mint against the spec</span></a></li>
+      </ul>
+      <p class="stack__more">
+        More libraries, including Python, Kotlin and Go, are listed on
+        <a href="https://github.com/lnurlcash/awesome-lnurlcash" target="_blank" rel="noopener">awesome-lnurlcash ↗</a>
+      </p>
+    </div>
   </section>
 
 </main>
@@ -206,28 +327,32 @@
   <div class="footer__top">
     <div class="footer__brand">
       <span class="footer__mark"><span class="nav__mark-lnurl">LNURL</span><span class="nav__mark-cash">CASH</span></span>
-      <p class="footer__tagline">Bearer notes for the Lightning Network, defined once in LUD-25.</p>
+      <p class="footer__tagline">Programmable bearer notes for the Lightning Network, defined in LUD-25 and LUD-26.</p>
     </div>
     <div class="footer__col">
       <h4>Specification</h4>
-      <a href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">LUD-25 — LNURLcash (PR #301)</a>
+      <a href="https://github.com/lnurl/luds/blob/lnurlcash/25.md" target="_blank" rel="noopener">LUD-25 — Bearer assets</a>
+      <a href="https://github.com/lnurl/luds/blob/lnurlcash/26.md" target="_blank" rel="noopener">LUD-26 — Derivation &amp; Lightning Address</a>
+      <a href="https://github.com/lnurl/luds/pull/301" target="_blank" rel="noopener">Discussion — PR #301</a>
       <a href="https://github.com/lnurl/luds/blob/luds/03.md" target="_blank" rel="noopener">LUD-03 — withdrawRequest</a>
       <a href="https://github.com/lnurl/luds/blob/luds/06.md" target="_blank" rel="noopener">LUD-06 — payRequest</a>
     </div>
     <div class="footer__col">
       <h4>Instruments</h4>
-      <a href="https://github.com/dni/lnurl-mint" target="_blank" rel="noopener"><i class="dot dot--mint" aria-hidden="true"></i>Mint</a>
-      <a href="https://github.com/dni/lnurl-wallet" target="_blank" rel="noopener"><i class="dot dot--amber" aria-hidden="true"></i>Wallet</a>
-      <a href="https://github.com/dni/lnurl-vault" target="_blank" rel="noopener"><i class="dot dot--navy" aria-hidden="true"></i>Vault</a>
+      <a href="https://github.com/lnurlcash/lnurl-mint" target="_blank" rel="noopener"><i class="dot dot--mint" aria-hidden="true"></i>Mint</a>
+      <a href="https://github.com/lnurlcash/lnurl-wallet" target="_blank" rel="noopener"><i class="dot dot--amber" aria-hidden="true"></i>Wallet</a>
+      <a href="https://github.com/lnurlcash/lnurl-vault" target="_blank" rel="noopener"><i class="dot dot--navy" aria-hidden="true"></i>Vault</a>
+      <a href="https://run.lnurlcash.com" target="_blank" rel="noopener"><i class="dot dot--gold" aria-hidden="true"></i>Run</a>
     </div>
     <div class="footer__col">
       <h4>Ecosystem</h4>
-      <a href="https://github.com/lnurl/luds" target="_blank" rel="noopener">LUDs — LNURL spec index ↗</a>
+      <a href="https://github.com/lnurlcash" target="_blank" rel="noopener">LNURLcash on GitHub ↗</a>
       <a href="https://github.com/lnurlcash/awesome-lnurlcash" target="_blank" rel="noopener">Awesome LNURLcash ↗</a>
+      <a href="https://github.com/lnurl/luds" target="_blank" rel="noopener">LUDs — LNURL spec index ↗</a>
     </div>
   </div>
   <div class="footer__bottom">
-    <span>SERIES LUD·25 — STATUS: DRAFT — NOT LEGAL TENDER</span>
+    <span>SERIES LUD·25 / LUD·26 — STATUS: DRAFT — NOT LEGAL TENDER</span>
     <span>lnurlcash.com</span>
   </div>
 </footer>

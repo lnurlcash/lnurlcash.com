@@ -71,6 +71,7 @@ button{ font: inherit; color: inherit; background: none; border: none; cursor: p
 .dot--mint{ background: var(--mint-bright); box-shadow: 0 0 6px var(--mint); }
 .dot--amber{ background: var(--amber-bright); box-shadow: 0 0 6px var(--amber); }
 .dot--navy{ background: var(--navy-bright); box-shadow: 0 0 6px var(--navy); }
+.dot--gold{ background: var(--gold-bright); box-shadow: 0 0 6px var(--gold); }
 
 /* ---------- nav ---------- */
 .nav{
@@ -234,6 +235,13 @@ button{ font: inherit; color: inherit; background: none; border: none; cursor: p
 }
 .note__serial.is-copied .note__serial-copied{ opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
+.note__cert{
+  margin-top: .55rem;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .04em; color: var(--paper-dim); opacity: .85;
+}
+.note__cert span{ color: var(--gold-bright); margin-right: .3em; }
+.note__cert em{ font-style: normal; color: var(--gold-bright); }
+
 .note__footer{
   z-index: 1;
   display: flex; flex-direction: column; gap: .3rem;
@@ -257,6 +265,34 @@ button{ font: inherit; color: inherit; background: none; border: none; cursor: p
 .conditions__num{ font-family: var(--mono); font-size: .74rem; letter-spacing: .1em; color: var(--gold-bright); }
 .conditions__title{ font-size: 1.15rem; margin-top: .7rem; }
 .conditions__body{ margin-top: .6rem; color: var(--paper-dim); font-size: .92rem; line-height: 1.55; }
+
+.conditions__grid--4{ grid-template-columns: repeat(4, 1fr); }
+.conditions__fine, .ops__fine{
+  margin-top: 1.2rem; font-family: var(--mono); font-size: .78rem; color: var(--paper-dim); line-height: 1.6;
+}
+
+/* ---------- operations ---------- */
+.ops{ max-width: var(--max); margin: 0 auto; padding: clamp(3rem, 6vw, 4.5rem) 1.75rem; border-top: 1px solid var(--hairline); }
+.ops__intro{ max-width: 62ch; }
+.ops__heading{ font-size: clamp(1.9rem, 3.4vw, 2.5rem); margin-top: .7rem; }
+.ops__sub{ margin-top: 1rem; color: var(--paper-dim); font-size: 1.02rem; line-height: 1.6; max-width: 58ch; }
+
+.ops__table{
+  margin-top: clamp(2.2rem, 4vw, 3rem);
+  display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline);
+}
+.ops__row{
+  display: grid; grid-template-columns: 7rem minmax(0, 1.1fr) minmax(0, 1.4fr);
+  gap: 1.5rem; align-items: baseline;
+  background: var(--ink); padding: 1.05rem 1.4rem;
+}
+.ops__row--head{
+  background: var(--ink-2);
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--paper-dim);
+}
+.ops__op{ font-family: var(--display); font-weight: 560; font-size: 1.1rem; }
+.ops__req{ background: none; padding: 0; font-size: .8rem; overflow-wrap: anywhere; }
+.ops__res{ color: var(--paper-dim); font-size: .92rem; line-height: 1.55; }
 
 /* ---------- stack / product section ---------- */
 .stack{ max-width: var(--max); margin: 0 auto; padding: 2rem 1.75rem clamp(4rem, 8vw, 6rem); border-top: 1px solid var(--hairline); }
@@ -313,6 +349,45 @@ button{ font: inherit; color: inherit; background: none; border: none; cursor: p
 .card__cta:hover{ color: var(--card-c); border-color: var(--card-c); }
 .card__cta--primary{ color: var(--card-c); border-color: color-mix(in srgb, var(--card-c) 50%, transparent); }
 
+/* ---------- run ---------- */
+.run{
+  --card-c: var(--gold-bright);
+  margin-top: 1.4rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 2rem 3rem; flex-wrap: wrap;
+  background:
+    radial-gradient(circle at 92% 20%, rgba(201,162,39,.12), transparent 45%),
+    var(--ink-2);
+  border: 1px solid var(--hairline);
+  border-top: 2px solid var(--gold-bright);
+  border-radius: var(--radius);
+  padding: 1.9rem 1.75rem 2.1rem;
+}
+.run__copy{ flex: 1 1 32rem; max-width: 64ch; }
+.run__name{ font-size: 1.7rem; margin-top: .6rem; }
+.run__desc{ margin-top: 1rem; color: var(--paper-dim); font-size: .95rem; line-height: 1.6; }
+.run__desc a{ color: var(--paper); border-bottom: 1px solid var(--hairline-2); }
+.run__desc a:hover{ color: var(--gold-bright); border-color: var(--gold-bright); }
+.run__actions{ display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+
+/* ---------- libraries ---------- */
+.libs{ margin-top: clamp(2.5rem, 5vw, 3.5rem); }
+.libs__heading{
+  font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--paper-dim); font-weight: 500;
+}
+.libs__list{
+  margin-top: 1rem;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: var(--hairline); border: 1px solid var(--hairline);
+}
+.libs__list a{
+  display: flex; flex-direction: column; gap: .35rem; height: 100%;
+  background: var(--ink); padding: 1.1rem 1.25rem; transition: background .15s ease;
+}
+.libs__list a:hover{ background: var(--ink-2); }
+.libs__list b{ font-family: var(--mono); font-weight: 500; font-size: .86rem; color: var(--gold-bright); }
+.libs__list span{ font-size: .85rem; color: var(--paper-dim); line-height: 1.45; }
+
 /* ---------- footer ---------- */
 .footer{ border-top: 1px solid var(--hairline); }
 .footer__top{
@@ -341,7 +416,11 @@ button{ font: inherit; color: inherit; background: none; border: none; cursor: p
   .hero{ grid-template-columns: 1fr; }
   .note{ order: -1; max-width: 480px; margin: 0 auto; }
   .cards{ grid-template-columns: 1fr; }
-  .conditions__grid{ grid-template-columns: 1fr; }
+  .conditions__grid, .conditions__grid--4{ grid-template-columns: 1fr 1fr; }
+  .libs__list{ grid-template-columns: 1fr 1fr; }
+  .ops__row{ grid-template-columns: 6rem minmax(0, 1fr); }
+  .ops__res{ grid-column: 2; }
+  .ops__row--head span:last-child{ display: none; }
   .footer__top{ grid-template-columns: 1fr; gap: 2rem; }
 }
 @media (max-width: 640px){
@@ -352,4 +431,8 @@ button{ font: inherit; color: inherit; background: none; border: none; cursor: p
   .hero{ padding-top: 2.5rem; }
   .note{ aspect-ratio: auto; }
   .note__body{ margin: 1.4rem 0; }
+  .conditions__grid, .conditions__grid--4, .libs__list{ grid-template-columns: 1fr; }
+  .ops__row{ grid-template-columns: 1fr; gap: .4rem; }
+  .ops__res{ grid-column: auto; }
+  .ops__row--head{ display: none; }
 }
